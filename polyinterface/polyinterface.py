@@ -756,9 +756,9 @@ class Node(object):
     hint = [ 0, 0, 0, 0 ]
 
 
-class Controller(Node):
+class Controller(object):
     """
-    Controller Class for controller management. Superclass of Node
+    Controller Class for controller management.
     """
     __exists = False
 
@@ -769,36 +769,30 @@ class Controller(Node):
         try:
             self.controller = self
             self.parent = self.controller
-            self.poly = poly
-            self.poly.onConfig(self._gotConfig)
-            self.poly.onStop(self.stop)
-            self.name = name
-            self.address = 'controller'
-            self.primary = self.address
-            self._drivers = deepcopy(self.drivers)
-            self._nodes = {}
             self.config = None
-            self.nodes = { self.address: self }
+            self._nodes = {}
+            self.nodes = {}
             self._threads = {}
             self._threads['input'] = Thread(target = self._parseInput, name = 'Controller')
             self._threads['ns']  = Thread(target = self.start, name = 'NodeServer')
             self.polyConfig = None
-            self.isPrimary = None
-            self.timeAdded = None
-            self.enabled = None
-            self.added = None
-            self.started = False
-            self.nodesAdding = []
-            # self._threads = []
+
+            self.poly = poly
+            self.poly.onConfig(self._gotConfig)
+            self.poly.onStop(self.stop)
+
             self._startThreads()
         except (KeyError) as err:
-            LOGGER.error('Error Creating node: {}'.format(err), exc_info=True)
+            LOGGER.error('Error Creating controller: {}'.format(err), exc_info=True)
 
     def _gotConfig(self, config):
         self.polyConfig = config
+
+        # add nodes from config to _nodes array, but don't delete?
         for node in config['nodes']:
             self._nodes[node['address']] = node
             if node['address'] in self.nodes:
+                # update node info everytime we get a config?
                 n = self.nodes[node['address']]
                 n.updateDrivers(node['drivers'])
                 n.config = node
@@ -806,20 +800,20 @@ class Controller(Node):
                 n.timeAdded = node['timeAdded']
                 n.enabled = node['enabled']
                 n.added = node['added']
-        if self.address not in self._nodes:
-            self.addNode(self)
-            LOGGER.info('Waiting on Controller node to be added.......')
+
+        # On first config, start the 'ns' thread
         if not self.started:
-            self.nodes[self.address] = self
             self.started = True
-            # self.setDriver('ST', 1, True, True)
             self._threads['ns'].start()
 
     def _startThreads(self):
         self._threads['input'].daemon = True
-        self._threads['ns'].daemon = True
         self._threads['input'].start()
 
+        # why don't we start the 'ns' thread here?
+        self._threads['ns'].daemon = True
+
+    # Runs in a thread, process messsages from Polyglot
     def _parseInput(self):
         while True:
             input = self.poly.inQueue.get()
@@ -1002,8 +996,6 @@ class Controller(Node):
         pass
 
     id = 'controller'
-    commands = {}
-    drivers = [{'driver': 'ST', 'value': 0, 'uom': 2}]
 
 
 if __name__ == "__main__":
