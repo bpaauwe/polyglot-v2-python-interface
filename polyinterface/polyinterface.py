@@ -88,8 +88,8 @@ def init_interface():
     warnings.resetwarnings()
 
     """
-    If this NodeServer is co-resident with Polyglot it will receive a STDIN config on startup
-    that looks like:
+    If this NodeServer is co-resident with Polyglot it will receive a STDIN
+    config on startup that looks like:
     {"token":"2cb40e507253fc8f4cbbe247089b28db79d859cbed700ec151",
     "mqttHost":"localhost","mqttPort":"1883","profileNum":"10"}
     """
@@ -115,6 +115,12 @@ def unload_interface():
     LOGGER.handlers = []
 
 
+"""
+The Interface class manages the communications with Polyglot.  
+
+Do we need to expose anything in this interface to the node server?
+"""
+
 class Interface(object):
 
     CUSTOM_CONFIG_DOCS_FILE_NAME = 'POLYGLOT_CONFIG.md'
@@ -123,7 +129,8 @@ class Interface(object):
     """
     Polyglot Interface Class
 
-    :param envVar: The Name of the variable from ~/.polyglot/.env that has this NodeServer's profile number
+    :param envVar: The Name of the variable from ~/.polyglot/.env that
+    has this NodeServer's profile number
     """
     # pylint: disable=too-many-instance-attributes
     # pylint: disable=unused-argument
@@ -149,9 +156,7 @@ class Interface(object):
         self.topicSelfConnection = 'udi/polyglot/connections/{}'.format(self.profileNum)
         self._threads = {}
         self._threads['socket'] = Thread(target = self._startMqtt, name = 'Interface')
-        #LOGGER.info('mqtt Client: name={}'.format(envVar))
         self._mqttc = mqtt.Client(envVar, True)
-        # self._mqttc.will_set(self.topicSelfConnection, json.dumps({'node': self.profileNum, 'connected': False}), retain=True)
         self._mqttc.on_connect = self._connect
         self._mqttc.on_message = self._message
         self._mqttc.on_subscribe = self._subscribe
@@ -180,7 +185,6 @@ class Interface(object):
         # self.loop = asyncio.new_event_loop()
         self.loop = None
         self.inQueue = queue.Queue()
-        # self.thread = Thread(target=self.start_loop)
         self.isyVersion = None
         self._server = os.environ.get("MQTT_HOST") or 'localhost'
         self._port = os.environ.get("MQTT_PORT") or '1883'
@@ -337,7 +341,6 @@ class Interface(object):
         done = False
         while not done:
             try:
-                # self._mqttc.connect_async(str(self._server), int(self._port), 10)
                 self._mqttc.connect_async('{}'.format(self._server), int(self._port), 10)
                 self._mqttc.loop_forever()
                 done = True
@@ -357,10 +360,6 @@ class Interface(object):
         stop the thread and disconnect. Publish the disconnected
         message if clean shutdown.
         """
-        # self.loop.call_soon_threadsafe(self.loop.stop)
-        # self.loop.stop()
-        # self._longPoll.cancel()
-        # self._shortPoll.cancel()
         if self.connected:
             LOGGER.info('Disconnecting from MQTT... {}:{}'.format(self._server, self._port))
             self._mqttc.publish(self.topicSelfConnection, json.dumps({'node': self.profileNum, 'connected': False}), retain=True)
@@ -661,17 +660,6 @@ class Node(object):
 
     def _convertDrivers(self, drivers):
         return deepcopy(drivers)
-        """
-        if isinstance(drivers, list):
-            newFormat = {}
-            for driver in drivers:
-                newFormat[driver['driver']] = {}
-                newFormat[driver['driver']]['value'] = driver['value']
-                newFormat[driver['driver']]['uom'] = driver['uom']
-            return newFormat
-        else:
-            return deepcopy(drivers)
-        """
 
     def setDriver(self, driver, value, report=True, force=False, uom=None):
         for d in self.drivers:
@@ -871,7 +859,6 @@ class Controller(Node):
                 if result['addnode']['success']:
                     if not result['addnode']['address'] == self.address:
                         self.nodes[result['addnode']['address']].start()
-                    # self.nodes[result['addnode']['address']].reportDrivers()
                     if result['addnode']['address'] in self.nodesAdding:
                         self.nodesAdding.remove(result['addnode']['address'])
                 else:
@@ -888,17 +875,6 @@ class Controller(Node):
 
     def _convertDrivers(self, drivers):
         return deepcopy(drivers)
-        """
-        if isinstance(drivers, list):
-            newFormat = {}
-            for driver in drivers:
-                newFormat[driver['driver']] = {}
-                newFormat[driver['driver']]['value'] = driver['value']
-                newFormat[driver['driver']]['uom'] = driver['uom']
-            return newFormat
-        else:
-            return deepcopy(drivers)
-        """
 
     def delete(self):
         """
@@ -921,11 +897,8 @@ class Controller(Node):
                         # JIMBO SAYS NO
                         # driver['uom'] = existing['uom']
         self.nodes[node.address] = node
-        # if node.address not in self._nodes or update:
         self.nodesAdding.append(node.address)
         self.poly.addNode(node)
-        # else:
-        #    self.nodes[node.address].start()
         return node
 
     """
