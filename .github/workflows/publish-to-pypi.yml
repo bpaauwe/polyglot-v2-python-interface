@@ -34,7 +34,7 @@ jobs:
       run: make build
 
     - name: Publish distribution to Test PyPI
-      if: startsWith(github.ref, 'refs/heads/master')
+      if: startsWith(github.ref, 'refs/heads/version-3')
       # This will fail if release already exists, should we use  --skip-existing
       run: make publish_pypi_test
       env:
@@ -50,21 +50,21 @@ jobs:
 #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required
 #        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} # Required
 
-    - name: Publish distribution to PyPi
-      if: startsWith(github.ref, 'refs/tags')
-      run: make publish_pypi
-      env:
-        PYPI_USER: __token__
-        PYPI_PASSWORD: ${{ secrets.pypitoken }}
+        #    - name: Publish distribution to PyPi
+        #      if: startsWith(github.ref, 'refs/tags')
+        #      run: make publish_pypi
+        #      env:
+        #        PYPI_USER: __token__
+        #        PYPI_PASSWORD: ${{ secrets.pypitoken }}
 
-    - name: Notify Results
-      if: always()
-      uses: innocarpe/actions-slack@v1
-      with:
-        status: ${{ job.status }} # Required
-        success_text: 'Step Succeeded 🚀' # Optional
-        failure_text: 'Step Failed 😱' # Optional
-        cancelled_text: 'Step Cancelled ⚠️' # Optional
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} # Required
+        #    - name: Notify Results
+        #      if: always()
+        #      uses: innocarpe/actions-slack@v1
+        #      with:
+        #        status: ${{ job.status }} # Required
+        #        success_text: 'Step Succeeded 🚀' # Optional
+        #        failure_text: 'Step Failed 😱' # Optional
+        #        cancelled_text: 'Step Cancelled ⚠️' # Optional
+        #      env:
+        #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required
+        #        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} # Required
